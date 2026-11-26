@@ -82,3 +82,29 @@ export async function onJoin(member) {
   await log(member.guild, `🦇 <@${member.id}> (${member.user.username}) stumbled into the checkpoint.${flag}`);
   return 'drifter';
 }
+
+// Fill in any missing role/channel/panel IDs by name. Lets the bot run on a
+// different machine than the one setup ran on (fresh data/ folder).
+export async function discover(guild, botId) {
+  const { ROLES, CHANNELS, ENGAGEMENT, ROLE_MENUS: MENUS } = await import('./config.js');
+  const ids = store.ids();
+  await guild.roles.fetch();
+  await guild.channels.fetch();
+  const byName = (name) => guild.roles.cache.find((r) => r.name === name)?.id;
+  for (const [key, spec] of Object.entries(ROLES)) ids.roles[key] ??= byName(spec.name);
+  for (const m of MENUS) for (const o of m.options) ids.roles[o.role] ??= byName(o.role);
+  const chan = (name) => guild.channels.cache.find((c) => c.name === name)?.id;
+  for (const [key, spec] of Object.entries(CHANNELS)) ids.channels[key] ??= chan(spec.name);
+  for (const c of ENGAGEMENT.channels) if (c.key) ids.channels[c.key] ??= chan(c.name);
+  for (const key of ['welcome', 'rules', 'intros', 'roles']) {
+    if (ids.messages[key] || !ids.channels[key]) continue;
+    const ch = guild.channels.cache.get(ids.channels[key]);
+    const pins = await ch?.messages.fetchPinned().catch(() => null);
+    const mine = pins?.find((m) => m.author.id === botId);
+    if (mine) ids.messages[key] = mine.id;
+  }
+  for (const k of Object.keys(ids.roles)) if (!ids.roles[k]) delete ids.roles[k];
+  for (const k of Object.keys(ids.channels)) if (!ids.channels[k]) delete ids.channels[k];
+  store.save();
+  return Boolean(ids.roles.citizen && ids.roles.drifter);
+}

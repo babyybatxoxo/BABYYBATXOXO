@@ -4,16 +4,12 @@ import {
 } from 'discord.js';
 import { TOKEN, GUILD_ID, MIN_AGE, AUTO_KICK_UNDERAGE, WELCOME_PING_MINUTES, ROLE_MENUS, TEXT, COLORS } from './config.js';
 import { IDS, introModal, introPost, welcomePanel, rulesPanel, introPanel, rolesPanel } from './panels.js';
-import { roleId, channelId, checklist, maybePromote, onJoin, log } from './gate.js';
+import { roleId, channelId, checklist, maybePromote, onJoin, log, discover } from './gate.js';
 import * as store from './store.js';
 import { funCommands, onFunCommand, startQOTD } from './fun.js';
 
 if (!TOKEN) {
   console.error('No DISCORD_TOKEN. Copy .env.example to .env and paste your bot token in.');
-  process.exit(1);
-}
-if (!store.ids().roles.citizen) {
-  console.error('No saved roles found. Run `npm run setup` first.');
   process.exit(1);
 }
 
@@ -38,6 +34,10 @@ const commands = [
 
 client.once(Events.ClientReady, async () => {
   const guild = await client.guilds.fetch(GUILD_ID);
+  if (!(await discover(guild, client.user.id))) {
+    console.error('Gate roles not found in the server. Run `npm run setup -- --with-engagement` first.');
+    process.exit(1);
+  }
   await guild.commands.set(commands);
   startQOTD(guild);
   console.log(`🦇 ${client.user.tag} is guarding the checkpoint of "${guild.name}"`);
