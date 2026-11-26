@@ -1,0 +1,19 @@
+{
+  "name": "bad-country-bot",
+  "version": "1.0.0",
+  "description": "Gatekeeper bot for the Bad Country Discord server. We can't stop here.",
+  "type": "module",
+  "main": "src/bot.js",
+  "scripts": {
+    "setup": "node src/setup.js",
+    "start": "node src/bot.js",
+    "check": "node --check src/bot.js && node --check src/setup.js && node --check src/panels.js && node --check src/gate.js && node --check src/store.js && node --check src/config.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "discord.js": "14.28.1",
+    "dotenv": "16.4.5"
+  }
+}
