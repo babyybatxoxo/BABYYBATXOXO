@@ -155,7 +155,7 @@ export const TEXT = {
       '**2.** 🪪 Fill out your **who-are-you** papers. Takes two minutes. Be weird. Be honest.',
       '**3.** 🎭 **Pick your poison** — at minimum your pronouns and your DM status.',
       '',
-      "Do all three and the bot hands you **🌵 Citizen of Bad Country** automatically. No waiting on a mod at 4am.",
+      "Do all three and **Checkpoint Charlie** stamps your papers and hands you **🌵 Citizen of Bad Country** on the spot. No waiting on a mod at 4am.",
       '',
       'Lost? Hit **"Where am I?"** below and it\'ll tell you exactly what\'s left.',
     ].join('\n'),

@@ -1,4 +1,4 @@
-# 🦇 Bad Country Bot
+# 🦇 Checkpoint Charlie: the Bad Country Bot
 
 > *We can't stop here. This is Bad Country.*
 
@@ -70,8 +70,25 @@ Bot features:
 ## Customizing
 Every name, emoji, color, rule and line of text is in **`src/config.js`**. After you edit it, run `npm run setup` again. It updates things in place and never deletes anything.
 
-## Hosting
+## Hosting with Docker Desktop
+Docker Desktop has to be running, and the bot is only up while your computer is on and awake.
+```bash
+cd bad-country-bot
+cp .env.example .env                                         # paste the token in
+docker compose run --rm bot npm run setup -- --with-engagement   # one-time build
+docker compose up -d                                         # start Charlie, auto-restarts
+docker compose logs -f                                       # watch him work (Ctrl+C to stop watching)
+```
+Progress is saved in `bad-country-bot/data/` on your computer, so it survives restarts and updates.
+To update after code changes, run `git pull`, then `docker compose up -d --build`.
+
+## Other hosting
 The bot only works while `npm start` is running. You can run it on a cheap VPS, Railway or Fly.io, or a Raspberry Pi. On a VPS, `pm2 start src/bot.js --name bad-country` keeps it alive after a crash or reboot. The `data/` folder holds progress and IDs, so back it up.
+
+## Terms & Privacy
+The Developer Portal (General Information) asks for these links:
+- Terms of Service → `TERMS.md`
+- Privacy Policy → `PRIVACY.md`
 
 ## Honest limits
 - No bot can truly verify age. The rules button and the age field are **self-attestation**. Discord's NSFW channels add Discord's own 18+ gate. Staff still need to act on any red flags or reports.
