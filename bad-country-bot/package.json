@@ -7,7 +7,7 @@
   "scripts": {
     "setup": "node src/setup.js",
     "start": "node src/bot.js",
-    "check": "node --check src/bot.js && node --check src/setup.js && node --check src/panels.js && node --check src/gate.js && node --check src/store.js && node --check src/config.js && node --check src/fun.js && node --check src/proxy.js"
+    "check": "node --check src/bot.js && node --check src/setup.js && node --check src/panels.js && node --check src/gate.js && node --check src/store.js && node --check src/config.js && node --check src/fun.js && node --check src/proxy.js && node --check src/gonzo.js"
   },
   "engines": {
     "node": ">=18.17"

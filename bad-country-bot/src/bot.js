@@ -8,6 +8,7 @@ import { IDS, introModal, introPost, welcomePanel, rulesPanel, introPanel, roles
 import { roleId, channelId, checklist, maybePromote, onJoin, log, discover } from './gate.js';
 import * as store from './store.js';
 import { funCommands, onFunCommand, startQOTD } from './fun.js';
+import { gonzoCommands, GONZO_NAMES, onGonzoCommand, onGonzoButton, isGonzoButton } from './gonzo.js';
 
 if (!TOKEN) {
   console.error('No DISCORD_TOKEN. Copy .env.example to .env and paste your bot token in.');
@@ -34,7 +35,7 @@ const commands = [
     .addSubcommand((s) => s.setName('reset').setDescription('Send someone back to the checkpoint as a Drifter')
       .addUserOption((o) => o.setName('user').setDescription('Who').setRequired(true)))
     .addSubcommand((s) => s.setName('panels').setDescription('Re-post/refresh the checkpoint panels from config')),
-].map((c) => c.toJSON()).concat(funCommands);
+].map((c) => c.toJSON()).concat(funCommands, gonzoCommands);
 
 client.once(Events.ClientReady, async () => {
   const guild = await client.guilds.fetch(GUILD_ID);
@@ -74,10 +75,12 @@ client.on(Events.GuildMemberUpdate, async (_old, member) => {
 client.on(Events.InteractionCreate, async (i) => {
   if (!i.inGuild() || i.guildId !== GUILD_ID) return;
   try {
+    if (i.isButton() && isGonzoButton(i.customId)) return await onGonzoButton(i);
     if (i.isButton()) return await onButton(i);
     if (i.isStringSelectMenu() && i.customId.startsWith('roles:')) return await onRoleMenu(i);
     if (i.isModalSubmit() && i.customId === IDS.modal) return await onIntroSubmit(i);
     if (i.isChatInputCommand() && i.commandName === 'checkpoint') return await onCommand(i);
+    if (i.isChatInputCommand() && GONZO_NAMES.has(i.commandName)) return await onGonzoCommand(i);
     if (i.isChatInputCommand()) return await onFunCommand(i);
   } catch (e) {
     console.error('[interaction]', e);

@@ -70,7 +70,28 @@ Bot features:
 ## Customizing
 Every name, emoji, color, rule and line of text is in **`src/config.js`**. After you edit it, run `npm run setup` again. It updates things in place and never deletes anything.
 
-## Hosting with Docker Desktop
+## Gonzo Arcade (fun commands)
+| command | what it does |
+|---|---|
+| `/bat-country` | triggers a hallucination in the channel |
+| `/trunk` | pops the trunk of the Red Shark and shows what's inside |
+| `/gonzo-name` | reveals your gonzo alter ego, which is always the same for you |
+| `/attorney` | asks your attorney for advice (do not follow it) |
+| `/fear-meter` | gives today's fear & loathing reading for anyone |
+| `/dispatch @someone` | files a gonzo news report about them |
+| `/trivia` | asks a true Hunter S. Thompson trivia question. Anyone can answer within 30 seconds, and right answers get +1 Gonzo Point |
+| `/mint400` | runs a multiplayer desert race. People join with a button, and the winner gets +3 points |
+| `/leaderboard` | shows the Gonzo Points standings |
+
+## One-click Docker Desktop
+1. Download the code: [ZIP](https://github.com/babyybatxoxo/BABYYBATXOXO/archive/refs/heads/claude/bad-country-server-setup-auz0qs.zip). Unzip it, then open `bad-country-bot`.
+2. Double-click **`start-charlie.command`** on Mac, or **`start-charlie.bat`** on Windows.
+   On Mac, if it says "unidentified developer," right-click the file and choose **Open**, then **Open** again.
+3. Paste the bot token when it asks. It's saved in `.env` on your computer only.
+
+The launcher opens Docker Desktop, builds Charlie, starts him and confirms he checked in. After that, he comes back by himself whenever Docker Desktop is running.
+
+## Hosting with Docker Desktop (manual)
 Docker Desktop has to be running, and the bot is only up while your computer is on and awake.
 ```bash
 cd bad-country-bot
