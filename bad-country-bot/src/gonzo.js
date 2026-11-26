@@ -9,11 +9,21 @@
 //   /trivia          Hunter S. Thompson trivia, anyone can answer, points for right answers
 //   /mint400         multiplayer desert race, join with a button, winner takes points
 //   /leaderboard     the Gonzo Points standings
+//   /raoul           talk to Raoul, the AI gonzo correspondent (needs ANTHROPIC_API_KEY)
+//   /journal         a page from Raoul's field journal
+//   /library         Hunter S. Thompson's books, with years
+//   /art             an original Bad Country gonzo postcard
+//   /road-trip       choose-your-own-disaster drive to Vegas, with buttons
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
-  ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBuilder, MessageFlags,
+  ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBuilder, MessageFlags, AttachmentBuilder,
 } from 'discord.js';
 import { COLORS } from './config.js';
 import * as store from './store.js';
+import { aiEnabled, raoulChat, raoulJournal } from './ai.js';
+
+const POSTCARDS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'postcards');
 
 const EPHEMERAL = { flags: MessageFlags.Ephemeral };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -126,6 +136,62 @@ export const TRIVIA = [
   { q: 'He wrote an obituary for Richard Nixon called…', options: ['"He Was a Crook"', '"Good Riddance"', '"The Last Lie"', '"Fear and Loathing in San Clemente"'], fact: 'Rolling Stone, 1994.' },
 ];
 
+
+// ── Journal (used when the AI isn't connected; original writing) ─
+const JOURNAL = [
+  ['Barstow, 3:12 a.m.', 'The motel sign has lost three letters and all of its dignity. It now says MO EL, which feels like a personal attack. I have filed a complaint with the night clerk, who is either asleep or a very convincing coat on a chair. The bats are out in force tonight. They circle the parking lot in tight, furious loops, like they know something about the morning that we do not.'],
+  ['The Checkpoint, 4:40 a.m.', 'Charlie checked three sets of papers tonight. One claimed to be "a ghost, but legally 34." Another listed their poison as "yes." Charlie stamped them all. Charlie believes in people. Charlie is a better man than me, and Charlie is a bat in sunglasses.'],
+  ['Somewhere on I-15, 2:05 a.m.', 'The radio found one station and it is only playing the sound of a man breathing. We are not changing it. It feels like the right soundtrack for a road with no other cars on it and a moon that keeps pacing us like a cop.'],
+  ['Room 1850, 5:30 a.m.', 'The ice machine down the hall has been screaming since midnight. At first I thought it was a malfunction. Now I think it is the only honest voice in this building. I filled a bucket out of solidarity. We understand each other now.'],
+  ['The Lizard Lounge, 1:15 a.m.', 'A woman at the bar told me she could see my aura and that it was "the color of a parking ticket." I have never felt so seen. Tipped the bartender double. The bartender may or may not have been a lizard, but the drinks were honest and the music was loud enough to drown out the bad thoughts.'],
+  ['Mint 400 pit row, dawn', 'Dust in the teeth. Dust in the notebook. Dust in places a doctor would ask about. Somewhere out there, eighty machines are screaming across the desert for no reason anyone can articulate, and God help me, it is beautiful.'],
+  ['The Trunk Log, 3:33 a.m.', 'Inventory check: one tape recorder, two dozen grapefruit, a press pass with somebody else\'s face on it, and a coconut that nobody will admit to buying. The coconut is the problem. The coconut knows.'],
+  ['Pool deck, Bad Country Hotel, 4:00 a.m.', 'Security has asked me to leave the pool twice. I have explained both times that I am conducting research. They do not understand journalism. Neither do I, anymore, but the water is warm and the stars are doing that thing where they wobble.'],
+];
+
+// Hunter S. Thompson's books (years = first publication).
+const LIBRARY = [
+  ["Hell's Angels", 1967, 'His first book: a year riding with the Hells Angels.'],
+  ['Fear and Loathing in Las Vegas', 1972, 'Raoul Duke and Dr. Gonzo vs. the American Dream. Illustrated by Ralph Steadman.'],
+  ["Fear and Loathing: On the Campaign Trail '72", 1973, 'The 1972 presidential race (Nixon vs. McGovern) from inside the bus.'],
+  ['The Great Shark Hunt', 1979, 'Gonzo Papers Vol. 1: a big collection of his journalism.'],
+  ['The Curse of Lono', 1983, 'Hawaii, a marathon and a curse. With Ralph Steadman.'],
+  ['Generation of Swine', 1988, 'Gonzo Papers Vol. 2: his 1980s newspaper columns.'],
+  ['Songs of the Doomed', 1990, 'Gonzo Papers Vol. 3: essays, stories and memoir.'],
+  ['Better Than Sex', 1994, 'Gonzo Papers Vol. 4: the 1992 presidential campaign.'],
+  ['The Proud Highway', 1997, 'Letters, 1955–1967.'],
+  ['The Rum Diary', 1998, 'His early novel, set in Puerto Rico and written around 1960.'],
+  ['Fear and Loathing in America', 2000, 'Letters, 1968–1976.'],
+  ['Kingdom of Fear', 2003, 'Late-career memoir and essays.'],
+  ['Hey Rube', 2004, 'Collected ESPN.com columns.'],
+];
+
+const POSTCARD_TITLES = ['Bats Over Barstow', 'Red Shark at Dawn', 'The Carpet Is Breathing', 'Room Service at 4 A.M.', 'Lizard Lounge Hallucination No. 9', 'The Eye of the Mint 400', 'Freak Power Sunset', 'Ether Static'];
+
+// ── Road trip ────────────────────────────────────────────────
+const TRIP = [
+  { scene: '🌵 **Barstow, edge of the desert.** The trunk is packed, the radio is screaming, and the sun is coming up like a threat.', choices: [
+    ['Floor it', [['The Red Shark hits 110 and the speedometer gives up.', 140, 2], ['You blow past a highway patrolman. He salutes. Strange.', 120, 1], ['A tumbleweed hits the windshield and you both scream.', 90, 2]]],
+    ['Gas & grapefruit', [['The clerk sells you 24 grapefruit and a map of a place that doesn\'t exist.', 60, 0], ['You fill up and feel almost responsible.', 70, -1], ['The pump starts talking to you. You tip it.', 60, 1]]],
+    ['Pick up a hitchhiker', [['He talks about the end of the world for 80 miles. Great guy.', 100, 2], ['She turns out to be a better driver than you. She takes the wheel.', 130, -1], ['He gets out at a cactus and says "this is my stop."', 80, 1]]],
+  ] },
+  { scene: '🎰 **The Strip rises out of the heat like a fever dream.** Neon everywhere. Your attorney is humming.', choices: [
+    ['Check into the hotel', [['The lobby carpet is breathing. You sign in anyway.', 30, 1], ['The front desk gives you the honeymoon suite "for security reasons."', 30, 2], ['You check in under a fake name and then forget it.', 20, 1]]],
+    ['Hit the casino floor', [['You win $400 at craps and lose it to a slot machine named Doris.', 10, 2], ['The dealer is a lizard. You lose with dignity.', 10, 1], ['You win big and immediately need to lie down.', 20, -1]]],
+    ['Wander into a conference', [['It\'s a room full of district attorneys. You take notes. You are not welcome.', 20, 3], ['You end up giving a keynote. Standing ovation. No idea what you said.', 20, 2], ['Free coffee. You drink six. Your eyes are vibrating.', 10, 2]]],
+  ] },
+  { scene: '🌙 **3 a.m., Room 1850.** The ice machine is screaming. The wallpaper is doing something it shouldn\'t.', choices: [
+    ['Call your attorney', [['"As your attorney, I advise you to go to sleep." Unusually good advice.', 0, -2], ['Your attorney is already in the bathtub with the radio. You leave.', 0, 2], ['He bills you $300 and hangs up.', 0, 1]]],
+    ['Order room service', [['Two club sandwiches and a pot of coffee. Civilization returns.', 0, -2], ['The waiter looks at the room and says nothing, which is worse.', 0, 1], ['They send up 12 grapefruit. You did not order grapefruit.', 0, 2]]],
+    ['Go swimming', [['The pool is closed. You swim anyway. Security is "disappointed."', 0, 2], ['You float under the stars and feel briefly immortal.', 0, -1], ['A bat lands on your floatie. You are friends now.', 0, 1]]],
+  ] },
+  { scene: '🌅 **Dawn.** Time to get out of town before the bill catches up with you.', choices: [
+    ['Pay the bill', [['The total is unspeakable. You pay it like a hero.', 120, -1], ['The clerk takes one look at you and gives you a discount out of pity.', 140, 0], ['They charge you for a coconut. You don\'t argue.', 130, 0]]],
+    ['Sneak out the back', [['Down the service stairs, into the Shark, onto the highway. Clean.', 160, 2], ['You set off every alarm, but nobody chases you.', 150, 3], ['The parking valet waves. He knows. He respects it.', 160, 1]]],
+    ['Drive into the sunrise', [['You scream the whole way to the state line. It helps.', 170, 2], ['The sunrise is so beautiful you have to pull over and sit with it.', 120, -2], ['The radio finally plays a good song. Pure joy for 4 minutes.', 160, 0]]],
+  ] },
+];
+
 // ── Commands ─────────────────────────────────────────────────
 export const gonzoCommands = [
   new SlashCommandBuilder().setName('bat-country').setDescription('We can\'t stop here. Trigger a hallucination.'),
@@ -141,6 +207,13 @@ export const gonzoCommands = [
   new SlashCommandBuilder().setName('trivia').setDescription('Hunter S. Thompson trivia: first round of answers win Gonzo Points'),
   new SlashCommandBuilder().setName('mint400').setDescription('Start a Mint 400 desert race. Anyone can join.'),
   new SlashCommandBuilder().setName('leaderboard').setDescription('Gonzo Points standings'),
+  new SlashCommandBuilder().setName('raoul').setDescription('Talk to Raoul, the AI gonzo correspondent')
+    .addStringOption((o) => o.setName('message').setDescription('What do you want to tell him?').setRequired(true).setMaxLength(600)),
+  new SlashCommandBuilder().setName('journal').setDescription('Read a page from Raoul\'s field journal')
+    .addStringOption((o) => o.setName('topic').setDescription('What should tonight\'s entry be about? (optional)').setMaxLength(150)),
+  new SlashCommandBuilder().setName('library').setDescription('Hunter S. Thompson\'s books, with the year each came out'),
+  new SlashCommandBuilder().setName('art').setDescription('An original Bad Country gonzo postcard'),
+  new SlashCommandBuilder().setName('road-trip').setDescription('Choose-your-own-disaster drive to Las Vegas'),
 ].map((c) => c.setDMPermission(false).toJSON());
 
 export const GONZO_NAMES = new Set(gonzoCommands.map((c) => c.name));
@@ -183,6 +256,44 @@ export async function onGonzoCommand(i) {
     const city = pick(['LAS VEGAS', 'BARSTOW', 'WOODY CREEK', 'BAKER', 'ASPEN', 'THE MOJAVE']);
     return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.dust).setTitle('📰 DISPATCH FROM THE DESERT').setDescription(`**${city} —** <@${u.id}> ${pick(D_WHO)} ${pick(D_DOING)} ${pick(D_WHERE)} at approximately ${1 + Math.floor(Math.random() * 4)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')} a.m. ${pick(D_WITNESS)}`).setFooter({ text: `Filed by ${i.user.username}, roving correspondent` })], allowedMentions: { parse: [] } });
   }
+
+
+  if (name === 'raoul') {
+    if (!aiEnabled) return i.reply({ content: '🦇 Raoul isn\'t hooked up yet. Staff: add an `ANTHROPIC_API_KEY` to Charlie\'s `.env` and restart him.', ...EPHEMERAL });
+    const s = (store.ids().raoulCooldown ??= {});
+    const wait = (s[i.user.id] ?? 0) + 15_000 - Date.now();
+    if (wait > 0) return i.reply({ content: `🥃 Raoul is still lighting a cigarette. Try again in ${Math.ceil(wait / 1000)}s.`, ...EPHEMERAL });
+    s[i.user.id] = Date.now();
+    await i.deferReply();
+    const msg = i.options.getString('message', true);
+    const reply = await raoulChat(i.channelId, i.member?.displayName ?? i.user.username, msg);
+    return i.editReply({ content: `> **${i.user.username}:** ${msg.slice(0, 300)}\n\n${reply}`, allowedMentions: { parse: [] } });
+  }
+
+  if (name === 'journal') {
+    const topic = i.options.getString('topic');
+    if (aiEnabled) {
+      await i.deferReply();
+      const entry = await raoulJournal(topic);
+      if (entry) return i.editReply({ embeds: [new EmbedBuilder().setColor(COLORS.dust).setTitle('📓 From Raoul\'s Field Journal').setDescription(entry.slice(0, 4000)).setFooter({ text: 'Written fresh by Raoul, an AI in a gonzo mood. Original fiction.' })] });
+    }
+    const [when, text] = JOURNAL[Math.floor(Math.random() * JOURNAL.length)];
+    const payload = { embeds: [new EmbedBuilder().setColor(COLORS.dust).setTitle('📓 From Raoul\'s Field Journal').setDescription(`**${when}**\n\n${text}`).setFooter({ text: 'Original fiction from Bad Country, written in a gonzo spirit.' })] };
+    return i.deferred ? i.editReply(payload) : i.reply(payload);
+  }
+
+  if (name === 'library') {
+    const body = LIBRARY.map(([t, y, d]) => `**${t}** (${y})\n${d}`).join('\n\n');
+    return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.desert).setTitle('📚 The Gonzo Library').setDescription(body).setFooter({ text: 'Read the real thing. Your local library has him. Charlie insists.' })] });
+  }
+
+  if (name === 'art') {
+    const n = 1 + Math.floor(Math.random() * POSTCARD_TITLES.length);
+    const file = new AttachmentBuilder(path.join(POSTCARDS, `postcard-${n}.png`), { name: `bad-country-${n}.png` });
+    return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.neon).setTitle(`🖼️ "${POSTCARD_TITLES[n - 1]}"`).setImage(`attachment://bad-country-${n}.png`).setFooter({ text: `Bad Country original, No. ${n} of ${POSTCARD_TITLES.length} • /art for another` })], files: [file] });
+  }
+
+  if (name === 'road-trip') return startTrip(i);
 
   if (name === 'trivia') return startTrivia(i);
   if (name === 'mint400') return startRace(i);
@@ -276,8 +387,55 @@ async function runRace(msg, race) {
   races.delete(msg.id);
 }
 
+
+// ── Road trip engine ─────────────────────────────────────────
+const trips = new Map(); // messageId → { owner, step, miles, chaos, log }
+
+function tripView(t) {
+  const sc = TRIP[t.step];
+  const gauge = (n) => '🦇'.repeat(Math.max(0, Math.min(10, n))) || '·';
+  const e = new EmbedBuilder().setColor(COLORS.blood).setTitle(`🦈 Road Trip to Vegas — Leg ${t.step + 1}/${TRIP.length}`)
+    .setDescription(`${t.log.length ? `${t.log.at(-1)}\n\n` : ''}${sc.scene}\n\n**What do you do?**`)
+    .addFields({ name: 'Miles', value: String(t.miles), inline: true }, { name: 'Chaos', value: gauge(t.chaos), inline: true });
+  const row = new ActionRowBuilder().addComponents(sc.choices.map(([label], n) => new ButtonBuilder().setCustomId(`trip:${n}`).setLabel(label).setStyle(n === 0 ? ButtonStyle.Danger : ButtonStyle.Secondary)));
+  return { embeds: [e], components: [row] };
+}
+
+async function startTrip(i) {
+  const t = { owner: i.user.id, step: 0, miles: 0, chaos: 3, log: [] };
+  const msg = await i.reply({ ...tripView(t), withResponse: true }).then((r) => r.resource.message);
+  trips.set(msg.id, t);
+  setTimeout(() => trips.delete(msg.id), 15 * 60_000);
+}
+
+async function onTripButton(i) {
+  const t = trips.get(i.message.id);
+  if (!t) return i.reply({ content: '🏜️ This trip ended. Start your own with `/road-trip`.', ...EPHEMERAL });
+  if (i.user.id !== t.owner) return i.reply({ content: '🚗 Not your car, pal. Start your own with `/road-trip`.', ...EPHEMERAL });
+  const [, outcomes] = TRIP[t.step].choices[Number(i.customId.split(':')[1])];
+  const [text, miles, chaos] = pick(outcomes);
+  t.miles += miles;
+  t.chaos = Math.max(0, Math.min(10, t.chaos + chaos));
+  t.log.push(`*${text}*`);
+  t.step++;
+  if (t.step < TRIP.length) return i.update(tripView(t));
+
+  trips.delete(i.message.id);
+  const pts = Math.round(t.miles / 100) + (t.chaos >= 7 ? 2 : t.chaos <= 2 ? 1 : 0);
+  addPoints(t.owner, pts);
+  const ending = t.chaos >= 8 ? 'You made it out alive, technically. Legends will be told. None of them flattering.'
+    : t.chaos <= 2 ? 'Suspiciously well-behaved. The desert is disappointed in you, but your liver is proud.'
+      : 'Sunburned, broke and changed forever. A classic run.';
+  const e = new EmbedBuilder().setColor(COLORS.desert).setTitle('🏁 Trip Report')
+    .setDescription(`${t.log.join('\n')}\n\n**${ending}**`)
+    .addFields({ name: 'Miles', value: String(t.miles), inline: true }, { name: 'Final chaos', value: `${t.chaos}/10`, inline: true }, { name: 'Gonzo Points', value: `+${pts}`, inline: true })
+    .setFooter({ text: '/road-trip to ride again • /leaderboard' });
+  return i.update({ embeds: [e], components: [] });
+}
+
 // ── Buttons ──────────────────────────────────────────────────
 export async function onGonzoButton(i) {
+  if (i.customId.startsWith('trip:')) return onTripButton(i);
   if (i.customId.startsWith('trivia:')) {
     const game = trivia.get(i.message.id);
     if (!game) return i.reply({ content: '⏰ That round is over. Start a new one with `/trivia`.', ...EPHEMERAL });
@@ -294,4 +452,4 @@ export async function onGonzoButton(i) {
   }
 }
 
-export const isGonzoButton = (id) => id.startsWith('trivia:') || id === 'mint:join';
+export const isGonzoButton = (id) => id.startsWith('trivia:') || id === 'mint:join' || id.startsWith('trip:');

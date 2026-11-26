@@ -82,6 +82,30 @@ Every name, emoji, color, rule and line of text is in **`src/config.js`**. After
 | `/trivia` | asks a true Hunter S. Thompson trivia question. Anyone can answer within 30 seconds, and right answers get +1 Gonzo Point |
 | `/mint400` | runs a multiplayer desert race. People join with a button, and the winner gets +3 points |
 | `/leaderboard` | shows the Gonzo Points standings |
+| `/road-trip` | runs a choose-your-own-disaster drive to Vegas with buttons, worth points |
+| `/raoul` | lets you talk to Raoul, an AI gonzo correspondent (needs `ANTHROPIC_API_KEY`) |
+| `/journal` | posts a page from Raoul's field journal. It's freshly written by AI when the key is set, and a built-in entry otherwise |
+| `/library` | lists Hunter S. Thompson's books with publication years |
+| `/art` | posts an original Bad Country postcard from `assets/postcards` |
+
+### Raoul (AI persona)
+Add `ANTHROPIC_API_KEY=...` to `.env` (get a key at console.anthropic.com) and restart Charlie.
+- Raoul runs on Claude Opus 5.5 at low effort. If a reply gets declined, the API automatically retries it on a fallback model.
+- Each reply costs a small amount, and each person can ask once every 15 seconds.
+- He is an AI character written in a gonzo style. He never claims to be Hunter S. Thompson.
+
+### Art & branding
+`node art/generate.mjs` redraws everything in `assets/` (needs Playwright):
+- `icon.png`: the app icon
+- `banner-profile.png`: the bot's profile banner
+- `cover.png`: the app cover
+- `emojis/`: 12 emojis
+- `postcards/`: 8 postcards for `/art`
+
+The command-center website lives in `site/`.
+
+### Updating Charlie in Docker
+Put `update-charlie.bat` in Charlie's folder and double-click it. It downloads the newest code, keeps your `.env` and data, and rebuilds.
 
 ## One-click Docker Desktop
 1. Download the code: [ZIP](https://github.com/babyybatxoxo/BABYYBATXOXO/archive/refs/heads/claude/bad-country-server-setup-auz0qs.zip). Unzip it, then open `bad-country-bot`.

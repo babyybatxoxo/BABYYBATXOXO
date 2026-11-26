@@ -3,3 +3,7 @@ node_modules
 data
 .git
 start-charlie.*
+update-charlie.*
+art
+assets/emojis
+assets/*.png

@@ -1,7 +1,7 @@
 // The always-on gatekeeper. Run with `npm start` and leave it running.
 import { restAgent } from './proxy.js'; // must load before discord.js
 import {
-  Client, GatewayIntentBits, Events, MessageFlags, SlashCommandBuilder, PermissionFlagsBits as P,
+  Client, GatewayIntentBits, Events, MessageFlags, SlashCommandBuilder, PermissionFlagsBits as P, ActivityType,
 } from 'discord.js';
 import { TOKEN, GUILD_ID, MIN_AGE, AUTO_KICK_UNDERAGE, WELCOME_PING_MINUTES, ROLE_MENUS, TEXT, COLORS } from './config.js';
 import { IDS, introModal, introPost, welcomePanel, rulesPanel, introPanel, rolesPanel, ROLE_PAGES } from './panels.js';
@@ -45,6 +45,7 @@ client.once(Events.ClientReady, async () => {
   }
   await guild.commands.set(commands);
   startQOTD(guild);
+  startPresence();
   console.log(`🦇 ${client.user.tag} is guarding the checkpoint of "${guild.name}"`);
 });
 
@@ -238,6 +239,34 @@ async function onCommand(i) {
     await log(i.guild, `↩️ <@${i.user.id}> sent <@${member.id}> back to the checkpoint.`);
     return i.editReply(`↩️ ${member.user.username} is a Drifter again: they need to re-sign the rules (intro + roles are kept, edit if needed).`);
   }
+}
+
+// ── Rich presence: Charlie's status rotates every few minutes ──
+const STATUSES = [
+  [ActivityType.Custom, "🦇 We can't stop here. This is Bad Country."],
+  [ActivityType.Watching, 'the checkpoint for narcs'],
+  [ActivityType.Listening, 'the ice machine scream'],
+  [ActivityType.Playing, 'the Mint 400 • /mint400'],
+  [ActivityType.Custom, '🦈 Driving the Red Shark at 110 mph'],
+  [ActivityType.Watching, 'the carpet breathe'],
+  [ActivityType.Custom, '📜 Checking papers since 1971'],
+  [ActivityType.Listening, 'your attorney • /attorney'],
+  [ActivityType.Custom, '🍊 Two dozen grapefruit in the trunk'],
+  [ActivityType.Competing, 'Gonzo trivia • /trivia'],
+  [ActivityType.Custom, '🌵 Buy the ticket, take the ride'],
+  [ActivityType.Watching, 'bats circle the Strip'],
+];
+function startPresence() {
+  let n = 0;
+  const set = () => {
+    const [type, text] = STATUSES[n++ % STATUSES.length];
+    client.user.setPresence({
+      status: 'online',
+      activities: [type === ActivityType.Custom ? { name: 'Custom Status', type, state: text } : { name: text, type }],
+    });
+  };
+  set();
+  setInterval(set, 3 * 60_000);
 }
 
 client.login(TOKEN);
