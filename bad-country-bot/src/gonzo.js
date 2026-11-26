@@ -23,6 +23,12 @@ import { COLORS } from './config.js';
 import * as store from './store.js';
 import { aiEnabled, raoulChat, raoulJournal } from './ai.js';
 
+// Charlie's custom app emojis (uploaded by art/brand.mjs); falls back to regular emoji.
+import fs from 'node:fs';
+let EMO = {};
+try { EMO = JSON.parse(fs.readFileSync(new URL('./emojis.json', import.meta.url), 'utf8')); } catch { /* no custom emojis */ }
+const emo = (name, fallback) => EMO[`bc_${name}`] ?? fallback;
+
 const POSTCARDS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'postcards');
 
 const EPHEMERAL = { flags: MessageFlags.Ephemeral };
@@ -222,12 +228,12 @@ export async function onGonzoCommand(i) {
   const name = i.commandName;
 
   if (name === 'bat-country') {
-    return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.neon).setTitle('🦇 We can\'t stop here. This is Bad Country.').setDescription(`*${pick(HALLUCINATIONS)}*`).setFooter({ text: `${i.user.username} is experiencing this. Everyone else is just watching.` })] });
+    return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.neon).setTitle('🦇 We can\'t stop here. This is Bad Country.').setDescription(`${emo('spiral', '🌀')} *${pick(HALLUCINATIONS)}*`).setFooter({ text: `${i.user.username} is experiencing this. Everyone else is just watching.` })] });
   }
 
   if (name === 'trunk') {
     const items = shuffle(TRUNK).slice(0, 5 + Math.floor(Math.random() * 3));
-    return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.blood).setTitle('🦈 The trunk of the Red Shark').setDescription(items.map((x) => `• ${x}`).join('\n')).addFields({ name: 'Status', value: pick(TRUNK_STATUS), inline: true }, { name: 'Opened by', value: `<@${i.user.id}>`, inline: true })] , allowedMentions: { parse: [] } });
+    return i.reply({ embeds: [new EmbedBuilder().setColor(COLORS.blood).setTitle('🦈 The trunk of the Red Shark').setDescription(`${emo('redshark', '🦈')} ${emo('grapefruit', '🍊')} ${emo('ether', '🧪')}\n${items.map((x) => `• ${x}`).join('\n')}`).addFields({ name: 'Status', value: pick(TRUNK_STATUS), inline: true }, { name: 'Opened by', value: `<@${i.user.id}>`, inline: true })] , allowedMentions: { parse: [] } });
   }
 
   if (name === 'gonzo-name') {
@@ -239,7 +245,7 @@ export async function onGonzoCommand(i) {
 
   if (name === 'attorney') {
     const q = i.options.getString('question', true);
-    return i.reply({ embeds: [new EmbedBuilder().setColor(0x3c6e71).setTitle('⚖️ Your Attorney Will See You Now').addFields({ name: 'Your question', value: q }, { name: 'Legal advice', value: pick(ADVICE) }).setFooter({ text: 'Not legal advice. Your attorney is a work of fiction and possibly a lizard.' })], allowedMentions: { parse: [] } });
+    return i.reply({ embeds: [new EmbedBuilder().setColor(0x3c6e71).setTitle('⚖️ Your Attorney Will See You Now').setDescription(emo('attorney', '⚖️')).addFields({ name: 'Your question', value: q }, { name: 'Legal advice', value: pick(ADVICE) }).setFooter({ text: 'Not legal advice. Your attorney is a work of fiction and possibly a lizard.' })], allowedMentions: { parse: [] } });
   }
 
   if (name === 'fear-meter') {
@@ -278,7 +284,7 @@ export async function onGonzoCommand(i) {
       if (entry) return i.editReply({ embeds: [new EmbedBuilder().setColor(COLORS.dust).setTitle('📓 From Raoul\'s Field Journal').setDescription(entry.slice(0, 4000)).setFooter({ text: 'Written fresh by Raoul, an AI in a gonzo mood. Original fiction.' })] });
     }
     const [when, text] = JOURNAL[Math.floor(Math.random() * JOURNAL.length)];
-    const payload = { embeds: [new EmbedBuilder().setColor(COLORS.dust).setTitle('📓 From Raoul\'s Field Journal').setDescription(`**${when}**\n\n${text}`).setFooter({ text: 'Original fiction from Bad Country, written in a gonzo spirit.' })] };
+    const payload = { embeds: [new EmbedBuilder().setColor(COLORS.dust).setTitle('📓 From Raoul\'s Field Journal').setDescription(`${emo('typewriter', '📓')} **${when}**\n\n${text}`).setFooter({ text: 'Original fiction from Bad Country, written in a gonzo spirit.' })] };
     return i.deferred ? i.editReply(payload) : i.reply(payload);
   }
 
@@ -315,7 +321,7 @@ async function startTrivia(i) {
   const order = shuffle([0, 1, 2, 3]);
   const correct = order.indexOf(0);
   const letters = ['🅰️', '🅱️', '©️', '🇩'];
-  const embed = new EmbedBuilder().setColor(COLORS.neon).setTitle('🧠 Gonzo Trivia').setDescription(`**${t.q}**\n\n${order.map((o, n) => `${letters[n]} ${t.options[o]}`).join('\n')}`).setFooter({ text: `${TRIVIA_SECONDS} seconds. One guess each. Right answers get +1 Gonzo Point.` });
+  const embed = new EmbedBuilder().setColor(COLORS.neon).setTitle('🧠 Gonzo Trivia').setDescription(`${emo('typewriter', '🧠')} **${t.q}**\n\n${order.map((o, n) => `${letters[n]} ${t.options[o]}`).join('\n')}`).setFooter({ text: `${TRIVIA_SECONDS} seconds. One guess each. Right answers get +1 Gonzo Point.` });
   const row = new ActionRowBuilder().addComponents(order.map((_, n) => new ButtonBuilder().setCustomId(`trivia:${n}`).setEmoji(letters[n]).setStyle(ButtonStyle.Secondary)));
   const msg = await i.reply({ embeds: [embed], components: [row], withResponse: true }).then((r) => r.resource.message);
   trivia.set(msg.id, { correct, answered: new Map() });
@@ -345,7 +351,7 @@ const RACE_EVENTS = [
 
 async function startRace(i) {
   const embed = (r) => new EmbedBuilder().setColor(COLORS.blood).setTitle('🏁 THE MINT 400 — the most chaotic desert race in the West')
-    .setDescription(`Engines screaming. Dust everywhere. **Join in the next ${LOBBY_SECONDS} seconds.**\n\n**Racers:**\n${[...r.racers.values()].map((n) => `🏎️ ${n}`).join('\n') || '*nobody yet…*'}`)
+    .setDescription(`${emo('mint400', '🏁')} ${emo('redshark', '🏎️')} Engines screaming. Dust everywhere. **Join in the next ${LOBBY_SECONDS} seconds.**\n\n**Racers:**\n${[...r.racers.values()].map((n) => `🏎️ ${n}`).join('\n') || '*nobody yet…*'}`)
     .setFooter({ text: 'Win: +3 Gonzo Points • Finish: +1' });
   const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('mint:join').setLabel('Strap in').setEmoji('🏎️').setStyle(ButtonStyle.Danger));
   const race = { racers: new Map([[i.user.id, i.user.username]]), started: false, embed };
@@ -382,7 +388,7 @@ async function runRace(msg, race) {
   for (const h of humans) addPoints(h.id, h === winner ? 3 : 1);
   const podium = field.map((f, n) => `${['🥇', '🥈', '🥉'][n] ?? `${n + 1}.`} ${f.name}`).join('\n');
   const done = new EmbedBuilder().setColor(COLORS.desert).setTitle('🏆 THE MINT 400 — FINAL')
-    .setDescription(`${podium}\n\n${winner.id ? `**<@${winner.id}> wins and takes +3 Gonzo Points.** Every human finisher gets +1.` : `**${winner.name} wins.** The humans have been humbled. Finishers still get +1.`}`);
+    .setDescription(`${emo('mint400', '🏁')}\n${podium}\n\n${winner.id ? `**<@${winner.id}> wins and takes +3 Gonzo Points.** Every human finisher gets +1.` : `**${winner.name} wins.** The humans have been humbled. Finishers still get +1.`}`);
   await msg.edit({ embeds: [done], components: [], allowedMentions: { parse: [] } });
   races.delete(msg.id);
 }
@@ -395,7 +401,7 @@ function tripView(t) {
   const sc = TRIP[t.step];
   const gauge = (n) => '🦇'.repeat(Math.max(0, Math.min(10, n))) || '·';
   const e = new EmbedBuilder().setColor(COLORS.blood).setTitle(`🦈 Road Trip to Vegas — Leg ${t.step + 1}/${TRIP.length}`)
-    .setDescription(`${t.log.length ? `${t.log.at(-1)}\n\n` : ''}${sc.scene}\n\n**What do you do?**`)
+    .setDescription(`${emo('redshark', '🦈')} ${t.log.length ? `${t.log.at(-1)}\n\n` : ''}${sc.scene}\n\n**What do you do?**`)
     .addFields({ name: 'Miles', value: String(t.miles), inline: true }, { name: 'Chaos', value: gauge(t.chaos), inline: true });
   const row = new ActionRowBuilder().addComponents(sc.choices.map(([label], n) => new ButtonBuilder().setCustomId(`trip:${n}`).setLabel(label).setStyle(n === 0 ? ButtonStyle.Danger : ButtonStyle.Secondary)));
   return { embeds: [e], components: [row] };
