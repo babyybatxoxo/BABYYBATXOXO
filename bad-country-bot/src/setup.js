@@ -169,7 +169,7 @@ client.once('ready', async () => {
             [hideAll, { id: r.citizen.id, type: OverwriteType.Role, allow: [P.ViewChannel] }, ...staff, bot], ChannelType.GuildCategory);
           if (nsfwCat) say(`(${ENGAGEMENT.categories[c.category]} contains NSFW channels — Discord will age-gate them too)`);
         }
-        await ensureChannel(guild, `eng_${c.name}`, c, cats[c.category]?.id, null, c.voice ? ChannelType.GuildVoice : ChannelType.GuildText);
+        await ensureChannel(guild, c.key ?? `eng_${c.name}`, c, cats[c.category]?.id, null, c.voice ? ChannelType.GuildVoice : ChannelType.GuildText);
         // ↑ null overwrites = channel syncs with its category's permissions.
       }
       if (!DRY) store.save();

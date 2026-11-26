@@ -175,7 +175,8 @@ export const TEXT = {
       ['7. No doxxing, no leaking.', "Don't post anyone's real info, faces, or screenshots of private convos without consent."],
       ['8. No spam, no self-promo raids.', 'Ask a mod before advertising. Scam links = instant ban.'],
       ['9. Discord\'s rules still apply.', 'Terms of Service + Community Guidelines. We don\'t make exceptions they wouldn\'t.'],
-      ['10. The Attorney has the final word.', "Mods make the call. Disagree? Take it to DMs with staff calmly — not to the main chat at full volume."],
+      ['10. Confessions are anonymous, not lawless.', 'Other members never see who sent a /confess. Staff can, so nobody uses the booth to out, threaten or harass anyone.'],
+      ['11. The Attorney has the final word.', "Mods make the call. Disagree? Take it to DMs with staff calmly — not to the main chat at full volume."],
     ],
     outro: 'By clicking below you swear — on whatever you hold sacred, even if it\'s just the bottle — that **you are 21 years of age or older** and you\'ll follow these rules.',
     button: "🦇 I'm 21+ and I accept the rules",
@@ -238,9 +239,9 @@ export const ENGAGEMENT = {
   },
   channels: [
     { approved: false, category: 'strip', name: '🏨┃flamingo-lobby', topic: 'Main chat. The lobby is full of reptiles. Ignore them.' },
-    { approved: false, category: 'strip', name: '🦎┃lizard-lounge', topic: 'Memes, cursed images, things you saw at 3am.' },
+    { approved: true, key: 'main', category: 'strip', name: '🦎┃lizard-lounge', topic: 'Main chat. Memes, cursed images, things you saw at 3am. Daily QOTD + confessions land here.' },
     { approved: false, category: 'strip', name: '🥃┃the-bar-tab', topic: "What are you drinking/smoking tonight? (Talk, don't source.)" },
-    { approved: false, category: 'strip', name: '📸┃polaroids', topic: 'Selfies, pets, your view. Only post people who consented.' },
+    { approved: true, category: 'strip', name: '📸┃polaroids', topic: 'Selfies, pets, your view. Only post people who consented.' },
     { approved: false, category: 'strip', name: '📻┃red-shark-radio', topic: 'Music. Drop what you have on repeat.' },
     { approved: false, category: 'strip', name: '📝┃gonzo-journal', topic: 'Long-form rants, stories, trip reports, 3am thoughts. First person, full send.' },
     { approved: false, category: 'strip', name: '🧯┃dumpster-fire', topic: 'Vent. Rage. Unload. Be gentle with each other in here.' },
@@ -248,6 +249,25 @@ export const ENGAGEMENT = {
     { approved: false, category: 'afterhours', name: '🔥┃after-hours', topic: 'Spicy talk. Consent rules apply double in here.', nsfw: true },
     { approved: false, category: 'afterhours', name: '💋┃thirst-traps', topic: 'Spicy pics of YOURSELF only. Consenting adults only.', nsfw: true },
     { approved: false, category: 'voice', name: '🦈 The Red Shark', voice: true },
-    { approved: false, category: 'voice', name: '🏨 Suite 1850', voice: true },
+    { approved: true, category: 'voice', name: '🏨 Suite 1850', voice: true },
   ],
+};
+
+// ── Fun stuff (see src/fun.js for the question + fact lists) ──
+// Channel keys: 'main' = the main chat (🦎 lizard-lounge).
+export const QOTD = {
+  enabled: true,
+  channel: 'main',
+  time: '21:00',                    // 24h clock…
+  timeZone: 'America/Los_Angeles',  // …in Vegas time. Change to yours.
+  withFact: true,                   // tack a Gonzo fact onto each daily post
+};
+
+export const CONFESSIONS = {
+  enabled: true,
+  channel: 'main',
+  cooldownMinutes: 10,
+  // Staff can see who wrote each confession (in the trunk log) so nobody can
+  // use anonymity to harass, out, or threaten people. Members are told this.
+  logAuthorToStaff: true,
 };

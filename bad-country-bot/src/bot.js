@@ -6,6 +6,7 @@ import { TOKEN, GUILD_ID, MIN_AGE, AUTO_KICK_UNDERAGE, WELCOME_PING_MINUTES, ROL
 import { IDS, introModal, introPost, welcomePanel, rulesPanel, introPanel, rolesPanel } from './panels.js';
 import { roleId, channelId, checklist, maybePromote, onJoin, log } from './gate.js';
 import * as store from './store.js';
+import { funCommands, onFunCommand, startQOTD } from './fun.js';
 
 if (!TOKEN) {
   console.error('No DISCORD_TOKEN. Copy .env.example to .env and paste your bot token in.');
@@ -33,11 +34,12 @@ const commands = [
     .addSubcommand((s) => s.setName('reset').setDescription('Send someone back to the checkpoint as a Drifter')
       .addUserOption((o) => o.setName('user').setDescription('Who').setRequired(true)))
     .addSubcommand((s) => s.setName('panels').setDescription('Re-post/refresh the checkpoint panels from config')),
-].map((c) => c.toJSON());
+].map((c) => c.toJSON()).concat(funCommands);
 
 client.once(Events.ClientReady, async () => {
   const guild = await client.guilds.fetch(GUILD_ID);
   await guild.commands.set(commands);
+  startQOTD(guild);
   console.log(`🦇 ${client.user.tag} is guarding the checkpoint of "${guild.name}"`);
 });
 
@@ -72,6 +74,7 @@ client.on(Events.InteractionCreate, async (i) => {
     if (i.isStringSelectMenu() && i.customId.startsWith('roles:')) return await onRoleMenu(i);
     if (i.isModalSubmit() && i.customId === IDS.modal) return await onIntroSubmit(i);
     if (i.isChatInputCommand() && i.commandName === 'checkpoint') return await onCommand(i);
+    if (i.isChatInputCommand()) return await onFunCommand(i);
   } catch (e) {
     console.error('[interaction]', e);
     const reply = { content: '🌀 Something went sideways in the desert. Try again, or poke a ⚖️ Attorney.', ...EPHEMERAL };

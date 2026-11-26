@@ -33,7 +33,7 @@ all 3 done ──► bot swaps Drifter for 🌵 Citizen of Bad Country → whole
    cp .env.example .env        # paste DISCORD_TOKEN in
    npm install
    npm run setup -- --dry-run  # look first, change nothing
-   npm run setup               # build it
+   npm run setup -- --with-engagement   # build it (checkpoint + approved channels)
    npm start                   # keep this running 24/7
    ```
 5. Give yourself **🩺 Dr. Gonzo** and your mods **⚖️ The Attorney**.
@@ -52,6 +52,19 @@ all 3 done ──► bot swaps Drifter for 🌵 Citizen of Bad Country → whole
 - `/checkpoint pass @user`: wave them through to Citizen
 - `/checkpoint reset @user`: send them back to Drifter (they re-sign the rules)
 - `/checkpoint panels`: refresh the panels after you edit `config.js`
+
+## Engagement (approved)
+`npm run setup -- --with-engagement` creates these:
+- **🌵 THE STRIP**
+  - 🦎┃lizard-lounge: the main chat
+  - 📸┃polaroids
+- **🦈 THE RED SHARK**
+  - 🏨 Suite 1850 (voice)
+
+Bot features:
+- **Daily QOTD:** "Dispatch from the Desert #N" posts to the main chat with an answer thread and a Gonzo fact attached. It goes out at **21:00 Vegas time** by default; change it under `QOTD` in config. Staff can post one on demand with `/qotd`, either random or with your own question.
+- **`/confess`:** for Citizens only, with a 10-minute cooldown. Members never see who sent a confession. Staff see the author in the trunk log so nobody can use the booth to hurt people. This is stated in the rules and in the reply.
+- **`/gonzo`:** posts a true Hunter S. Thompson fact. Facts don't repeat until the whole list has been used. The facts and questions are in `src/fun.js`.
 
 ## Customizing
 Every name, emoji, color, rule and line of text is in **`src/config.js`**. After you edit it, run `npm run setup` again. It updates things in place and never deletes anything.
