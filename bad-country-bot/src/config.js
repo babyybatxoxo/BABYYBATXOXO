@@ -239,8 +239,9 @@ export const ENGAGEMENT = {
   },
   channels: [
     { approved: false, category: 'strip', name: '🏨┃flamingo-lobby', topic: 'Main chat. The lobby is full of reptiles. Ignore them.' },
-    { approved: true, key: 'main', category: 'strip', name: '🦎┃lizard-lounge', topic: 'Main chat. Memes, cursed images, things you saw at 3am. Daily QOTD + confessions land here.' },
+    { approved: true, key: 'main', category: 'strip', name: '🦎┃lizard-lounge', topic: 'Main chat. Memes, cursed images, things you saw at 3am. Daily QOTD lands here.' },
     { approved: false, category: 'strip', name: '🥃┃the-bar-tab', topic: "What are you drinking/smoking tonight? (Talk, don't source.)" },
+    { approved: true, key: 'booth', readOnly: true, category: 'strip', name: '🕯️┃confession-booth', topic: 'Anonymous sins only. Use /confess (from any channel). React or reply in the thread under each one. No guessing who wrote it.' },
     { approved: true, category: 'strip', name: '📸┃polaroids', topic: 'Selfies, pets, your view. Only post people who consented.' },
     { approved: false, category: 'strip', name: '📻┃red-shark-radio', topic: 'Music. Drop what you have on repeat.' },
     { approved: false, category: 'strip', name: '📝┃gonzo-journal', topic: 'Long-form rants, stories, trip reports, 3am thoughts. First person, full send.' },
@@ -254,7 +255,7 @@ export const ENGAGEMENT = {
 };
 
 // ── Fun stuff (see src/fun.js for the question + fact lists) ──
-// Channel keys: 'main' = the main chat (🦎 lizard-lounge).
+// Channel keys: 'main' = 🦎 lizard-lounge, 'booth' = 🕯️ confession-booth.
 export const QOTD = {
   enabled: true,
   channel: 'main',
@@ -265,7 +266,7 @@ export const QOTD = {
 
 export const CONFESSIONS = {
   enabled: true,
-  channel: 'main',
+  channel: 'booth',
   cooldownMinutes: 10,
   // Staff can see who wrote each confession (in the trunk log) so nobody can
   // use anonymity to harass, out, or threaten people. Members are told this.

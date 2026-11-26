@@ -196,9 +196,10 @@ export async function onFunCommand(i) {
 
     const text = i.options.getString('confession', true);
     const msg = await channel.send({
-      embeds: [new EmbedBuilder().setColor(COLORS.blood).setTitle(`🕯️ Confession #${n}`).setDescription(text).setFooter({ text: 'Anonymous. Use /confess to unburden your own soul.' })],
+      embeds: [new EmbedBuilder().setColor(COLORS.blood).setTitle(`🕯️ Confession #${n}`).setDescription(text).setFooter({ text: 'Anonymous. Reply in the thread • /confess to unburden your own soul.' })],
       allowedMentions: { parse: [] },
     });
+    await msg.startThread({ name: `Confession #${n}`, autoArchiveDuration: 1440 }).catch(() => {});
     if (CONFESSIONS.logAuthorToStaff) {
       await log(i.guild, `🕯️ Confession #${n} was sent by <@${i.user.id}> (${i.user.username}). ${msg.url}`);
     }
