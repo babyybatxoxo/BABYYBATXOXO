@@ -260,7 +260,7 @@ export const QOTD = {
   enabled: true,
   channel: 'main',
   time: '21:00',                    // 24h clock…
-  timeZone: 'America/Los_Angeles',  // …in Vegas time. Change to yours.
+  timeZone: 'America/New_York',     // …New York time (handles daylight saving).
   withFact: true,                   // tack a Gonzo fact onto each daily post
 };
 

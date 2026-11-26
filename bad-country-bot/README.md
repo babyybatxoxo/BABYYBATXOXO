@@ -63,7 +63,7 @@ all 3 done ──► bot swaps Drifter for 🌵 Citizen of Bad Country → whole
   - 🏨 Suite 1850 (voice)
 
 Bot features:
-- **Daily QOTD:** "Dispatch from the Desert #N" posts to lizard-lounge with an answer thread and a Gonzo fact attached. It goes out at **21:00 Vegas time** by default; change it under `QOTD` in config. Staff can post one on demand with `/qotd`, either random or with your own question.
+- **Daily QOTD:** "Dispatch from the Desert #N" posts to lizard-lounge with an answer thread and a Gonzo fact attached. It goes out at **9pm New York time** by default; change it under `QOTD` in config. Staff can post one on demand with `/qotd`, either random or with your own question.
 - **`/confess`:** works from any channel and posts to the confession booth. For Citizens only, with a 10-minute cooldown. Members never see who sent a confession. Staff see the author in the trunk log so nobody can use the booth to hurt people. This is stated in the rules and in the reply.
 - **`/gonzo`:** posts a true Hunter S. Thompson fact. Facts don't repeat until the whole list has been used. The facts and questions are in `src/fun.js`.
 
