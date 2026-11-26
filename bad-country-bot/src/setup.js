@@ -8,9 +8,10 @@
 //   npm run setup -- --fix-leaks          → strip "@everyone can view" overrides from old channels
 //   npm run setup -- --dry-run            → just report what it sees, change nothing
 import { REST, Routes, ChannelType, PermissionFlagsBits as P } from 'discord.js';
-import { TOKEN, GUILD_ID, ROLES, ROLE_MENUS, CATEGORIES, CHANNELS, ENGAGEMENT } from './config.js';
-import { welcomePanel, rulesPanel, introPanel, rolesPanel } from './panels.js';
+import { TOKEN, GUILD_ID, ROLES, ROLE_MENUS, CATEGORIES, CHANNELS, ENGAGEMENT, NSFW_GATE } from './config.js';
+import { welcomePanel, rulesPanel, introPanel, rolesPanel, ROLE_PAGES } from './panels.js';
 import * as store from './store.js';
+import { ProxyAgent } from 'undici';
 
 const args = new Set(process.argv.slice(2));
 const DRY = args.has('--dry-run');
@@ -21,7 +22,9 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-const api = new REST({ version: '10' }).setToken(TOKEN);
+// Honor HTTPS_PROXY if the machine uses one (Node's HTTP client ignores it otherwise).
+const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+const api = new REST({ version: '10', ...(proxy ? { agent: new ProxyAgent(proxy) } : {}) }).setToken(TOKEN);
 const ROLE = 0;
 const MEMBER = 1;
 const bits = (list) => String((list ?? []).reduce((a, b) => a | b, 0n));
@@ -47,6 +50,8 @@ async function ensureRole(key, spec, botTop) {
     role = await api.post(Routes.guildRoles(GUILD_ID), { body, reason: spec.reason ?? 'Bad Country setup' });
     roles.push(role);
     say('created role', spec.name);
+  } else if (!spec.manage) {
+    say('using existing role', spec.name);
   } else if (role.position < botTop) {
     role = await api.patch(Routes.guildRole(GUILD_ID, role.id), { body, reason: 'Bad Country setup' });
     say('updated role', spec.name);
@@ -55,24 +60,29 @@ async function ensureRole(key, spec, botTop) {
   return role;
 }
 
-async function ensureChannel(key, spec, parentId, overwrites, type = ChannelType.GuildText) {
+// opts.keepName → don't rename an existing channel. overwrites === undefined →
+// leave its permissions alone (new channels then follow their category).
+async function ensureChannel(key, spec, parentId, overwrites, type = ChannelType.GuildText, opts = {}) {
   const ids = store.ids().channels;
-  let ch = channels.find((c) => c.id === ids[key]) || channels.find((c) => c.name === spec.name && c.type === type);
+  let ch = channels.find((c) => c.id === (spec.id ?? ids[key])) || channels.find((c) => c.name === spec.name && c.type === type);
+  const renaming = !(ch && opts.keepName);
   const body = {
-    name: spec.name,
-    ...(type === ChannelType.GuildText ? { topic: spec.topic ?? null, nsfw: Boolean(spec.nsfw) } : {}),
+    ...(renaming ? { name: spec.name } : {}),
+    ...(type === ChannelType.GuildText && spec.topic !== undefined ? { topic: spec.topic, nsfw: Boolean(spec.nsfw) } : {}),
     ...(parentId ? { parent_id: parentId } : {}),
-    permission_overwrites: overwrites,
+    ...(overwrites !== undefined ? { permission_overwrites: overwrites } : {}),
   };
-  if (DRY) { say(ch ? 'channel exists' : 'would create channel', spec.name); return ch; }
   const label = type === ChannelType.GuildCategory ? 'category' : 'channel';
+  const shown = ch && !renaming ? ch.name : spec.name;
+  if (DRY) { say(ch ? `would update ${label}` : `would create ${label}`, ch && ch.name !== spec.name && renaming ? `${ch.name} → ${spec.name}` : shown); return ch; }
   if (!ch) {
-    ch = await api.post(Routes.guildChannels(GUILD_ID), { body: { ...body, type }, reason: 'Bad Country setup' });
+    ch = await api.post(Routes.guildChannels(GUILD_ID), { body: { ...body, name: spec.name, type }, reason: 'Bad Country setup' });
     channels.push(ch);
     say('created', label, spec.name);
   } else {
+    const before = ch.name;
     ch = await api.patch(Routes.channel(ch.id), { body, reason: 'Bad Country setup' });
-    say('updated', label, spec.name);
+    say('updated', label, before !== ch.name ? `${before} → ${ch.name}` : ch.name);
   }
   ids[key] = ch.id;
   return ch;
@@ -113,7 +123,7 @@ async function main() {
 
   // 1 ── Roles (top-down so the role list reads right).
   const r = {};
-  for (const key of ['gonzo', 'attorney', 'citizen', 'drifter']) r[key] = await ensureRole(key, ROLES[key], botTop);
+  for (const key of ['gonzo', 'attorney', 'citizen', 'drifter']) r[key] = await ensureRole(key, { ...ROLES[key], manage: true }, botTop);
   for (const menu of ROLE_MENUS) for (const o of menu.options) await ensureRole(o.role, { name: o.role, reason: `Self-role (${menu.key})` }, botTop);
 
   if (DRY) {
@@ -174,19 +184,19 @@ async function main() {
   const staff = [r.gonzo, r.attorney].map((role) => ow(role.id, ROLE, [P.ViewChannel, P.SendMessages, P.ReadMessageHistory, P.ManageMessages]));
 
   const checkpointOW = [hideAll, readOnlyFor(r.drifter), readOnlyFor(r.citizen), ...staff, bot];
-  const cat = await ensureChannel('cat_checkpoint', { name: CATEGORIES.checkpoint }, null, checkpointOW, ChannelType.GuildCategory);
+  const cat = await ensureChannel('cat_checkpoint', CATEGORIES.checkpoint, null, checkpointOW, ChannelType.GuildCategory, { keepName: true });
   const trunkOW = [hideAll, ow(r.citizen.id, ROLE, [], [P.ViewChannel]), ...staff, bot];
-  const trunk = await ensureChannel('cat_trunk', { name: CATEGORIES.trunk }, null, trunkOW, ChannelType.GuildCategory);
+  const trunk = await ensureChannel('cat_trunk', CATEGORIES.trunk, null, trunkOW, ChannelType.GuildCategory);
 
   const ch = {};
-  for (const key of ['welcome', 'rules', 'roles']) ch[key] = await ensureChannel(key, CHANNELS[key], cat.id, checkpointOW);
+  for (const key of ['welcome', 'rules', 'roles']) ch[key] = await ensureChannel(key, CHANNELS[key], cat.id, checkpointOW, ChannelType.GuildText, { keepName: true });
   const introOW = [
     hideAll,
     readOnlyFor(r.drifter),
     ow(r.citizen.id, ROLE, [P.ViewChannel, P.ReadMessageHistory, P.AddReactions, P.SendMessagesInThreads], [P.SendMessages, P.CreatePublicThreads]),
     ...staff, bot,
   ];
-  ch.intros = await ensureChannel('intros', CHANNELS.intros, cat.id, introOW);
+  ch.intros = await ensureChannel('intros', CHANNELS.intros, cat.id, introOW, ChannelType.GuildText, { keepName: true });
   ch.log = await ensureChannel('log', CHANNELS.log, trunk.id, trunkOW);
   store.save();
 
@@ -194,7 +204,7 @@ async function main() {
   await postPanel(ch.welcome, 'welcome', welcomePanel());
   await postPanel(ch.rules, 'rules', rulesPanel());
   await postPanel(ch.intros, 'intros', introPanel());
-  await postPanel(ch.roles, 'roles', rolesPanel());
+  for (let pg = 0; pg < ROLE_PAGES; pg++) await postPanel(ch.roles, pg ? `roles${pg + 1}` : 'roles', rolesPanel(pg));
   store.save();
 
   // 5 ── Engagement channels (only the approved ones in config.js).
@@ -204,17 +214,38 @@ async function main() {
     const catOW = [hideAll, ow(r.citizen.id, ROLE, [P.ViewChannel]), ...staff, bot];
     const cats = {};
     for (const c of approved) {
-      cats[c.category] ??= await ensureChannel(`cat_${c.category}`, { name: ENGAGEMENT.categories[c.category] }, null, catOW, ChannelType.GuildCategory);
+      const catSpec = ENGAGEMENT.categories[c.category];
+      // Existing category (has an id) → put channels in it, don't touch the category.
+      cats[c.category] ??= typeof catSpec === 'object' && catSpec.id
+        ? { id: catSpec.id }
+        : await ensureChannel(`cat_${c.category}`, { name: catSpec }, null, catOW, ChannelType.GuildCategory);
       // readOnly → only the bot posts; Citizens read, react and reply in threads.
       const chOW = c.readOnly
         ? [hideAll, ow(r.citizen.id, ROLE, [P.ViewChannel, P.ReadMessageHistory, P.AddReactions, P.SendMessagesInThreads], [P.SendMessages, P.CreatePublicThreads, P.CreatePrivateThreads]), ...staff, bot]
-        : catOW; // same as the category = "synced"
+        : undefined; // follow the category (existing channels: left as they are)
       await ensureChannel(c.key ?? `eng_${c.name}`, c, cats[c.category].id, chOW, c.voice ? ChannelType.GuildVoice : ChannelType.GuildText);
     }
     store.save();
   }
 
+  // 5b ── NSFW category: only 🔞 NSFW Access can see it.
+  if (NSFW_GATE?.categoryId) {
+    const nsfwRole = roles.find((x) => x.id === store.ids().roles[NSFW_GATE.role]);
+    const nsfwCat = channels.find((c) => c.id === NSFW_GATE.categoryId);
+    if (nsfwRole && nsfwCat) {
+      const before = JSON.stringify(nsfwCat.permission_overwrites ?? []);
+      const gateOW = [hideAll, ow(nsfwRole.id, ROLE, [P.ViewChannel]), ...staff, bot];
+      await api.patch(Routes.channel(nsfwCat.id), { body: { permission_overwrites: gateOW }, reason: 'Bad Country: NSFW Access only' });
+      // Children that were synced with the category stay synced.
+      for (const c of channels.filter((x) => x.parent_id === nsfwCat.id && JSON.stringify(x.permission_overwrites ?? []) === before)) {
+        await api.patch(Routes.channel(c.id), { body: { permission_overwrites: gateOW, nsfw: true }, reason: 'Bad Country: NSFW Access only' });
+      }
+      say('NSFW category is now 🔞 NSFW Access only (channels marked NSFW)');
+    } else say('⚠️ NSFW gate skipped: category or role not found');
+  }
+
   // 6 ── Leak check: old channels that explicitly let @everyone in.
+  channels = await api.get(Routes.guildChannels(GUILD_ID));
   const leaks = channels.filter((c) => (c.permission_overwrites ?? []).some((o) => o.id === GUILD_ID && (BigInt(o.allow) & P.ViewChannel)));
   if (leaks.length) {
     say(`⚠️ ${leaks.length} channel(s) explicitly allow @everyone to view (they bypass the gate):`);

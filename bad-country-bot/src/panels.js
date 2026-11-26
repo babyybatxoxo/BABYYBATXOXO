@@ -49,12 +49,11 @@ export function introPanel() {
   return { embeds: [embed], components: [row] };
 }
 
-export function rolesPanel() {
-  const embed = new EmbedBuilder()
-    .setColor(COLORS.ether)
-    .setTitle(TEXT.roles.title)
-    .setDescription(TEXT.roles.body);
-  const rows = ROLE_MENUS.slice(0, 5).map((menu) =>
+// Discord allows 5 menus per message, so the role picker can span messages.
+export const ROLE_PAGES = Math.ceil(ROLE_MENUS.length / 5);
+
+export function rolesPanel(page = 0) {
+  const rows = ROLE_MENUS.slice(page * 5, page * 5 + 5).map((menu) =>
     new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(IDS.menu(menu.key))
@@ -69,6 +68,11 @@ export function rolesPanel() {
         }))),
     ),
   );
+  if (page > 0) return { content: '**…more roles:**', embeds: [], components: rows };
+  const embed = new EmbedBuilder()
+    .setColor(COLORS.ether)
+    .setTitle(TEXT.roles.title)
+    .setDescription(TEXT.roles.body);
   return { embeds: [embed], components: rows };
 }
 

@@ -3,7 +3,7 @@ import {
   Client, GatewayIntentBits, Events, MessageFlags, SlashCommandBuilder, PermissionFlagsBits as P,
 } from 'discord.js';
 import { TOKEN, GUILD_ID, MIN_AGE, AUTO_KICK_UNDERAGE, WELCOME_PING_MINUTES, ROLE_MENUS, TEXT, COLORS } from './config.js';
-import { IDS, introModal, introPost, welcomePanel, rulesPanel, introPanel, rolesPanel } from './panels.js';
+import { IDS, introModal, introPost, welcomePanel, rulesPanel, introPanel, rolesPanel, ROLE_PAGES } from './panels.js';
 import { roleId, channelId, checklist, maybePromote, onJoin, log, discover } from './gate.js';
 import * as store from './store.js';
 import { funCommands, onFunCommand, startQOTD } from './fun.js';
@@ -181,9 +181,10 @@ async function onCommand(i) {
   await i.deferReply(EPHEMERAL);
 
   if (sub === 'panels') {
-    const plan = [['welcome', welcomePanel], ['rules', rulesPanel], ['intros', introPanel], ['roles', rolesPanel]];
-    for (const [key, build] of plan) {
-      const ch = await i.guild.channels.fetch(channelId(key));
+    const plan = [['welcome', 'welcome', welcomePanel], ['rules', 'rules', rulesPanel], ['intros', 'intros', introPanel]];
+    for (let pg = 0; pg < ROLE_PAGES; pg++) plan.push([pg ? `roles${pg + 1}` : 'roles', 'roles', () => rolesPanel(pg)]);
+    for (const [key, chKey, build] of plan) {
+      const ch = await i.guild.channels.fetch(channelId(chKey));
       const msgs = store.ids().messages;
       const old = msgs[key] && (await ch.messages.fetch(msgs[key]).catch(() => null));
       if (old) await old.edit(build());

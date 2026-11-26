@@ -56,23 +56,13 @@ export const ROLES = {
   },
 };
 
-// ── Self-roles for #pick-your-poison ─────────────────────────
+// ── Self-roles for the roles channel ─────────────────────────
+// `role` is the EXACT role name in the server. Existing roles are reused as-is
+// (never recolored); missing ones get created.
 // `required: true` → must pick something here before becoming a Citizen.
 // `single: true`   → only one choice allowed in that category.
+// Max 5 menus per message; menus after the 5th go in a second message.
 export const ROLE_MENUS = [
-  {
-    key: 'pronouns',
-    placeholder: '🪞 Pronouns — what do we call you?',
-    required: true,
-    single: false,
-    options: [
-      { label: 'he/him', emoji: '🦂', role: 'he/him' },
-      { label: 'she/her', emoji: '🌹', role: 'she/her' },
-      { label: 'they/them', emoji: '🌀', role: 'they/them' },
-      { label: 'any/all', emoji: '✨', role: 'any/all' },
-      { label: 'ask me', emoji: '❓', role: 'ask my pronouns' },
-    ],
-  },
   {
     key: 'dms',
     placeholder: '📬 DM status — consent is sexy, declare it',
@@ -85,16 +75,33 @@ export const ROLE_MENUS = [
     ],
   },
   {
+    key: 'identity',
+    placeholder: '🪞 Identity & pronouns',
+    required: false,
+    single: false,
+    options: [
+      { label: 'Male (he/him)', emoji: '♂️', role: '♂️ Male (He/Him)' },
+      { label: 'Female (she/her)', emoji: '♀️', role: '♀️ Female (She/Her)' },
+      { label: 'Transgender', emoji: '🏳️‍⚧️', role: '🏳️‍⚧️ Transgender' },
+      { label: 'they/them', emoji: '🌀', role: 'they/them' },
+      { label: 'any/all', emoji: '✨', role: 'any/all' },
+      { label: 'ask my pronouns', emoji: '❓', role: 'ask my pronouns' },
+    ],
+  },
+  {
     key: 'poison',
     placeholder: '🧪 Your poison — pick your vices',
     required: false,
     single: false,
     options: [
+      { label: 'Weed / Cannabis', emoji: '🌿', role: '🌿 Weed / Cannabis' },
+      { label: 'Psychedelics', emoji: '🍄', role: '🍄 Psychedelics' },
+      { label: 'Stimulants', emoji: '💊', role: '💊 Stimulants' },
+      { label: 'Downers / Opioids', emoji: '💤', role: '💤 Downers / Opioids' },
       { label: 'Whiskey Priest', emoji: '🥃', role: '🥃 Whiskey Priest' },
       { label: 'Wine Gremlin', emoji: '🍷', role: '🍷 Wine Gremlin' },
       { label: 'Beer Goblin', emoji: '🍺', role: '🍺 Beer Goblin' },
       { label: 'Cocktail Chemist', emoji: '🍸', role: '🍸 Cocktail Chemist' },
-      { label: 'Herbalist (where legal)', emoji: '🌿', role: '🌿 Herbalist' },
       { label: 'Caffeine Fiend', emoji: '☕', role: '☕ Caffeine Fiend' },
       { label: 'Sober & Still Unhinged', emoji: '🧃', role: '🧃 Sober & Unhinged' },
     ],
@@ -105,11 +112,22 @@ export const ROLE_MENUS = [
     required: false,
     single: true,
     options: [
-      { label: 'North America', emoji: '🌵', role: '🌵 North America' },
-      { label: 'Latin America', emoji: '🌶️', role: '🌶️ Latin America' },
-      { label: 'Europe', emoji: '🏰', role: '🏰 Europe' },
-      { label: 'Africa / Middle East', emoji: '🐪', role: '🐪 Africa & Middle East' },
-      { label: 'Asia / Oceania', emoji: '🌏', role: '🌏 Asia & Oceania' },
+      { label: 'North America', emoji: '🌍', role: '🌍 North America' },
+      { label: 'South America', emoji: '🌎', role: '🌎 South America' },
+      { label: 'Europe', emoji: '🌍', role: '🌍 Europe' },
+      { label: 'Asia', emoji: '🌏', role: '🌏 Asia' },
+      { label: 'Africa', emoji: '🌍', role: '🌍 Africa' },
+      { label: 'Oceania / Australia', emoji: '🌏', role: '🌏 Oceania / Australia' },
+    ],
+  },
+  {
+    key: 'nsfw',
+    placeholder: '🔞 NSFW — want the spicy channels?',
+    required: false,
+    single: true,
+    options: [
+      { label: 'NSFW Access', emoji: '🔞', role: '🔞 NSFW Access', description: 'Unlocks the NSFW category.' },
+      { label: 'No NSFW', emoji: '🔒', role: '🔒 No NSFW', description: 'Keep it clean for me.' },
     ],
   },
   {
@@ -126,18 +144,23 @@ export const ROLE_MENUS = [
   },
 ];
 
+// Only people with this role can see the NSFW category (set to null to leave it alone).
+export const NSFW_GATE = { categoryId: '1575419575049261096', role: '🔞 NSFW Access' };
+
 // ── The checkpoint (what Drifters can see) ───────────────────
+// `id` = an existing channel/category in your server. Those are reused and keep
+// their names (only permissions + topic are set). Without an id, it's created.
 export const CATEGORIES = {
-  checkpoint: '🚧 THE CHECKPOINT',
-  trunk: '🧳 THE TRUNK',
+  checkpoint: { id: '1541236535343710300', name: 'Welcome-to-Bad-Country' },
+  trunk: { name: '🧳 THE TRUNK' },
 };
 
 export const CHANNELS = {
-  welcome: { name: '🦇┃welcome-to-bad-country', topic: "We can't stop here. This is Bad Country. Start here.", category: 'checkpoint' },
-  rules: { name: '📜┃the-rules', topic: 'Read them sober. Or at least squint. Then sign at the bottom.', category: 'checkpoint' },
-  intros: { name: '🪪┃who-are-you', topic: 'Papers, please. Every soul in the desert has filled these out.', category: 'checkpoint' },
-  roles: { name: '🎭┃pick-your-poison', topic: 'Pronouns, DM status, vices, pings. Change them whenever.', category: 'checkpoint' },
-  log: { name: '📓┃the-trunk-log', topic: 'Staff only. Joins, verifications, red flags.', category: 'trunk' },
+  welcome: { id: '1575417656800972921', name: 'welcome', topic: "We can't stop here. This is Bad Country. Start here.", category: 'checkpoint' },
+  rules: { id: '1541240786425872547', name: 'The-Fine-Print', topic: 'Read them sober. Or at least squint. Then sign at the bottom.', category: 'checkpoint' },
+  intros: { id: '1541243052473983106', name: 'Who-Are-You', topic: 'Papers, please. Every soul in the desert has filled these out.', category: 'checkpoint' },
+  roles: { id: '1541243192492564490', name: 'Roles', topic: 'DM status, identity, vices, region, NSFW, pings. Change them whenever.', category: 'checkpoint' },
+  log: { name: '📓┃the-trunk-log', topic: 'Staff only. Joins, verifications, red flags, confession authors.', category: 'trunk' },
 };
 
 // ── Words ────────────────────────────────────────────────────
@@ -153,7 +176,7 @@ export const TEXT = {
       '',
       '**1.** 📜 Read **the rules** and sign at the bottom (that\'s you swearing you\'re 21+).',
       '**2.** 🪪 Fill out your **who-are-you** papers. Takes two minutes. Be weird. Be honest.',
-      '**3.** 🎭 **Pick your poison** — at minimum your pronouns and your DM status.',
+      '**3.** 🎭 **Pick your roles** — at minimum your DM status.',
       '',
       "Do all three and **Checkpoint Charlie** stamps your papers and hands you **🌵 Citizen of Bad Country** on the spot. No waiting on a mod at 4am.",
       '',
@@ -216,7 +239,7 @@ export const TEXT = {
     body: [
       'Use the menus below. You can come back and change these any time.',
       '',
-      '**Required for Citizenship:** 🪞 pronouns + 📬 DM status.',
+      '**Required for Citizenship:** 📬 DM status.',
       'Everything else is just for fun (and so we know who to ping at 3am).',
       '',
       '_Pick nothing in a menu to clear it._',
@@ -232,14 +255,16 @@ export const TEXT = {
 // Flip `approved: true` on the ones you want, then run:
 //   npm run setup -- --with-engagement
 export const ENGAGEMENT = {
+  // `id` = existing category: channels go in there, category left untouched.
   categories: {
-    strip: '🌵 THE STRIP',
+    strip: { id: '1540905724077670470' },  // your Hangout category
+    vchub: { id: '1541232204590354483' },  // your VC-Hub category
     afterhours: '🌙 AFTER HOURS (NSFW)',
     voice: '🦈 THE RED SHARK',
   },
   channels: [
     { approved: false, category: 'strip', name: '🏨┃flamingo-lobby', topic: 'Main chat. The lobby is full of reptiles. Ignore them.' },
-    { approved: true, key: 'main', category: 'strip', name: '🦎┃lizard-lounge', topic: 'Main chat. Memes, cursed images, things you saw at 3am. Daily QOTD lands here.' },
+    { approved: true, key: 'main', id: '1541223108310995114', keepPerms: true, category: 'strip', name: '🦎┃lizard-lounge', topic: 'Main chat. Memes, cursed images, things you saw at 3am. Daily QOTD lands here.' },
     { approved: false, category: 'strip', name: '🥃┃the-bar-tab', topic: "What are you drinking/smoking tonight? (Talk, don't source.)" },
     { approved: true, key: 'booth', readOnly: true, category: 'strip', name: '🕯️┃confession-booth', topic: 'Anonymous sins only. Use /confess (from any channel). React or reply in the thread under each one. No guessing who wrote it.' },
     { approved: true, category: 'strip', name: '📸┃polaroids', topic: 'Selfies, pets, your view. Only post people who consented.' },
@@ -250,7 +275,7 @@ export const ENGAGEMENT = {
     { approved: false, category: 'afterhours', name: '🔥┃after-hours', topic: 'Spicy talk. Consent rules apply double in here.', nsfw: true },
     { approved: false, category: 'afterhours', name: '💋┃thirst-traps', topic: 'Spicy pics of YOURSELF only. Consenting adults only.', nsfw: true },
     { approved: false, category: 'voice', name: '🦈 The Red Shark', voice: true },
-    { approved: true, category: 'voice', name: '🏨 Suite 1850', voice: true },
+    { approved: true, category: 'vchub', name: '🏨 Suite 1850', voice: true },
   ],
 };
 

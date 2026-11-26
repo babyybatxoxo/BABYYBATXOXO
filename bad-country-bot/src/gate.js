@@ -32,7 +32,7 @@ export function checklist(member) {
     "**Your papers so far:**",
     `${tick(steps.rules)} Sign the rules in ${ch('rules')}`,
     `${tick(steps.intro)} File your intro in ${ch('intros')}`,
-    `${tick(steps.roles)} Pick pronouns + DM status in ${ch('roles')}`,
+    `${tick(steps.roles)} Pick your DM status (and whatever else) in ${ch('roles')}`,
   ].join('\n');
 }
 
@@ -94,14 +94,15 @@ export async function discover(guild, botId) {
   for (const [key, spec] of Object.entries(ROLES)) ids.roles[key] ??= byName(spec.name);
   for (const m of MENUS) for (const o of m.options) ids.roles[o.role] ??= byName(o.role);
   const chan = (name) => guild.channels.cache.find((c) => c.name === name)?.id;
-  for (const [key, spec] of Object.entries(CHANNELS)) ids.channels[key] ??= chan(spec.name);
-  for (const c of ENGAGEMENT.channels) if (c.key) ids.channels[c.key] ??= chan(c.name);
+  for (const [key, spec] of Object.entries(CHANNELS)) ids.channels[key] ??= spec.id ?? chan(spec.name);
+  for (const c of ENGAGEMENT.channels) if (c.key) ids.channels[c.key] ??= c.id ?? chan(c.name);
   for (const key of ['welcome', 'rules', 'intros', 'roles']) {
     if (ids.messages[key] || !ids.channels[key]) continue;
     const ch = guild.channels.cache.get(ids.channels[key]);
     const pins = await ch?.messages.fetchPinned().catch(() => null);
-    const mine = pins?.find((m) => m.author.id === botId);
-    if (mine) ids.messages[key] = mine.id;
+    const mine = [...(pins?.values() ?? [])].filter((m) => m.author.id === botId).sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+    if (key === 'roles') mine.forEach((m, n) => { ids.messages[n ? `roles${n + 1}` : 'roles'] = m.id; });
+    else if (mine[0]) ids.messages[key] = mine[0].id;
   }
   for (const k of Object.keys(ids.roles)) if (!ids.roles[k]) delete ids.roles[k];
   for (const k of Object.keys(ids.channels)) if (!ids.channels[k]) delete ids.channels[k];
