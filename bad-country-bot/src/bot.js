@@ -87,32 +87,34 @@ async function freshMember(i) {
   return i.guild.members.fetch({ user: i.user.id, force: true });
 }
 
+// Discord gives us 3 seconds to answer, so acknowledge first, work after.
 async function onButton(i) {
+  const rec = store.member(i.user.id);
+
+  if (i.customId === IDS.intro) {
+    if (rec.blockedUnderage) {
+      return i.reply({ content: '🚫 Your papers are on hold with staff. A ⚖️ Attorney will sort it out.', ...EPHEMERAL });
+    }
+    return i.showModal(introModal(rec.intro?.answers)); // must be the first response
+  }
+
+  await i.deferReply(EPHEMERAL);
   const member = await freshMember(i);
-  const rec = store.member(member.id);
 
   if (i.customId === IDS.status) {
-    return i.reply({ content: checklist(member), ...EPHEMERAL });
+    return i.editReply(checklist(member));
   }
 
   if (i.customId === IDS.accept) {
     if (!rec.rulesAt) {
       rec.rulesAt = Date.now();
       store.save();
-      await log(i.guild, `📜 <@${member.id}> signed the rules (swore 21+).`);
+      log(i.guild, `📜 <@${member.id}> signed the rules (swore 21+).`);
     }
-    await i.deferReply(EPHEMERAL);
     const promoted = await maybePromote(member);
     return i.editReply(promoted
       ? TEXT.verified('You')
       : `📜 Signed in blood (metaphorically). Noted that you swear you're **${MIN_AGE}+**.\n\n${checklist(await freshMember(i))}`);
-  }
-
-  if (i.customId === IDS.intro) {
-    if (rec.blockedUnderage) {
-      return i.reply({ content: '🚫 Your papers are on hold with staff. A ⚖️ Attorney will sort it out.', ...EPHEMERAL });
-    }
-    return i.showModal(introModal(rec.intro?.answers));
   }
 }
 
