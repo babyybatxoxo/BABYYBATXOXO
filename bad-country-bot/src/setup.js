@@ -11,7 +11,7 @@ import { REST, Routes, ChannelType, PermissionFlagsBits as P } from 'discord.js'
 import { TOKEN, GUILD_ID, ROLES, ROLE_MENUS, CATEGORIES, CHANNELS, ENGAGEMENT, NSFW_GATE } from './config.js';
 import { welcomePanel, rulesPanel, introPanel, rolesPanel, ROLE_PAGES } from './panels.js';
 import * as store from './store.js';
-import { ProxyAgent } from 'undici';
+import { restAgent } from './proxy.js';
 
 const args = new Set(process.argv.slice(2));
 const DRY = args.has('--dry-run');
@@ -22,9 +22,7 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-// Honor HTTPS_PROXY if the machine uses one (Node's HTTP client ignores it otherwise).
-const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
-const api = new REST({ version: '10', ...(proxy ? { agent: new ProxyAgent(proxy) } : {}) }).setToken(TOKEN);
+const api = new REST({ version: '10', ...(restAgent ? { agent: restAgent } : {}) }).setToken(TOKEN);
 const ROLE = 0;
 const MEMBER = 1;
 const bits = (list) => String((list ?? []).reduce((a, b) => a | b, 0n));

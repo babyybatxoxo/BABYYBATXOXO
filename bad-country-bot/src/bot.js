@@ -1,4 +1,5 @@
 // The always-on gatekeeper. Run with `npm start` and leave it running.
+import { restAgent } from './proxy.js'; // must load before discord.js
 import {
   Client, GatewayIntentBits, Events, MessageFlags, SlashCommandBuilder, PermissionFlagsBits as P,
 } from 'discord.js';
@@ -13,7 +14,10 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+  ...(restAgent ? { rest: { agent: restAgent } } : {}),
+});
 const EPHEMERAL = { flags: MessageFlags.Ephemeral };
 
 // ── Slash commands for staff ─────────────────────────────────
